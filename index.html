@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>日本藥妝比價</title>
+<!-- ============================================================
+     05-drugstore-compare · 日本藥妝比價小工具
+     v1.2 · 2026-07-20
+     v1.2：隨手記的店家列直接「＋」加店（常見店點一下就加，也可自訂）。
+     v1.1：改為「隨手記」流程——路過看到就記「商品＠店 ¥價」，
+           清單顯示各店原始標價；免稅＋券級距搬到「結算」分頁。
+     單檔工具：內嵌 _design-system/design-system.css v1
+     離線可用；匯率可線上抓（open.er-api.com），斷網用手動匯率
+     預設各店優惠為 2026-07 參考值，實際以現場公告為準（可自行修改）
+     ============================================================ -->
+<style>
+/* ---------- design-system.css v1（內嵌） ---------- */
+:root{
+  --ink:#1f2a33;--text:#2a3340;--muted:#6b7683;--line:#dbe1df;
+  --bg:#eef1ef;--card:#ffffff;
+  --accent:#2c6e7f;--accent-soft:#e3eef0;
+  --ok:#2e7d5b;--ok-soft:#e2f0e9;
+  --warn:#b5761a;--warn-soft:#f6ecd9;
+  --danger:#b4453c;--danger-soft:#f4e0dd;
+  --radius:12px;--radius-sm:8px;--radius-lg:14px;--radius-pill:999px;
+  --shadow:0 1px 2px rgba(31,42,51,.06),0 8px 24px rgba(31,42,51,.06);
+  --shadow-hover:0 6px 18px rgba(23,40,58,.08);
+  --wrap:1040px;--wrap-narrow:760px;
+  --font:"PingFang TC","Noto Sans TC","Microsoft JhengHei",-apple-system,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--font);color:var(--text);background:var(--bg);line-height:1.6;
+  font-size:15px;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;
+  word-break:break-word;overflow-wrap:anywhere}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:22px 16px 96px}
+.eyebrow{font-size:12px;letter-spacing:.16em;color:var(--accent);font-weight:700;text-transform:uppercase}
+h1{font-size:27px;font-weight:800;letter-spacing:-.01em;margin:6px 0 8px;color:var(--ink)}
+h2{font-size:16px;font-weight:800;color:var(--ink);margin:0 0 4px}
+.lede{font-size:14.5px;color:var(--muted);max-width:46ch;line-height:1.6}
+.hint{color:var(--muted);font-size:13px;margin:0 0 16px}
+.muted{color:var(--muted)}
+a{color:var(--accent)}
+header.app{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+  padding:6px 2px 16px;border-bottom:2px solid var(--ink);margin-bottom:14px}
+header.app h1{font-size:22px;letter-spacing:.5px;margin:0}
+header.app .sub{color:var(--muted);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px}
+.tab{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--muted);
+  padding:9px 15px;border-radius:var(--radius-pill);cursor:pointer;font-size:15px;
+  font-weight:700;transition:all .15s;font-family:inherit}
+.tab:hover{border-color:var(--accent);color:var(--accent)}
+.tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+button.btn,.btn{font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;
+  border:1px solid var(--ink);background:var(--ink);color:#fff;padding:10px 18px;
+  border-radius:var(--radius-sm);transition:all .15s}
+.btn:hover{opacity:.9}
+.btn.ghost{background:#fff;color:var(--ink)}
+.btn.accent{background:var(--accent);border-color:var(--accent)}
+.btn.ok{background:var(--ok);border-color:var(--ok)}
+.btn.warn{background:#fff;border-color:var(--warn);color:var(--warn)}
+.btn.danger{background:#fff;border-color:var(--danger);color:var(--danger)}
+.btn.lg{font-size:17px;padding:13px 26px}
+.btn.sm{font-size:14px;padding:6px 12px}
+button.icon,.icon{border:1px solid var(--line);background:#fff;color:var(--muted);
+  border-radius:6px;cursor:pointer;padding:4px 9px;font-size:13px;font-family:inherit;transition:all .12s}
+.icon:hover{border-color:var(--accent);color:var(--accent)}
+.icon.danger:hover{border-color:var(--danger);color:var(--danger)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+label.field{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted);font-weight:600}
+input[type=text],input[type=number],select,textarea{
+  font-family:inherit;font-size:15px;color:var(--text);border:1px solid var(--line);
+  border-radius:var(--radius-sm);padding:9px 11px;background:#fff;min-width:120px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+.switch{display:inline-flex;align-items:center;gap:7px;font-size:14px;color:var(--muted);font-weight:600;cursor:pointer}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:700}
+.chip{display:inline-block;padding:2px 9px;border-radius:var(--radius-pill);font-size:12px;
+  font-weight:600;background:var(--bg);color:var(--muted);border:1px solid var(--line);margin:2px 3px 2px 0}
+.badge{display:inline-block;padding:2px 9px;border-radius:6px;font-size:12px;font-weight:700}
+.badge.auto{background:var(--accent-soft);color:var(--accent)}
+.badge.manual{background:var(--warn-soft);color:var(--warn)}
+.badge.none{background:var(--danger-soft);color:var(--danger)}
+.notice{padding:12px 15px;border:1.5px solid #e2b4b4;background:#fdf2f2;border-radius:11px;
+  color:#c0392b;font-size:13.5px;line-height:1.7;font-weight:600;margin:0 0 20px}
+.empty{color:var(--muted);font-size:14px;padding:12px 2px}
+.divider{height:1px;background:var(--line);margin:16px 0}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);
+  color:#fff;padding:11px 20px;border-radius:var(--radius-pill);font-size:14px;font-weight:600;
+  box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:50}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+@media(max-width:560px){header.app h1{font-size:19px}}
+@media print{.tabs,.no-print{display:none!important}body{background:#fff}.card{box-shadow:none;border-color:#ccc}}
+
+/* ---------- 本工具追加樣式 ---------- */
+#sumTable th,#sumTable td{white-space:nowrap}
+#sumTable td.empty,#sumTable td.muted{white-space:normal}
+.win{outline:2.5px solid var(--ok);background:var(--ok-soft)}
+.sum-net{font-weight:800;color:var(--ink);font-size:15px}
+/* 隨手記快速輸入列（黏在上方） */
+.quick{position:sticky;top:8px;z-index:30;border-color:var(--accent);padding:14px 16px}
+.qstores{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.qstores .tab{padding:7px 13px;font-size:14px}
+.qstores .tab.plus{border-style:dashed;color:var(--accent);border-color:var(--accent)}
+.qadd{margin:0 0 10px;padding:10px 12px;border:1.5px dashed var(--accent);border-radius:var(--radius-sm);background:var(--accent-soft)}
+.qadd .hint{margin:0 0 6px}
+.qadd .tab{padding:6px 12px;font-size:14px;margin:2px 4px 2px 0}
+.qrow{display:flex;gap:8px;align-items:stretch}
+.qrow input{min-width:0}
+#qName{flex:1.6}
+#qPrice{flex:1;font-size:17px;font-weight:700}
+.qrow .btn{flex:none;padding:10px 16px}
+/* 商品列：各店原始標價 chip */
+.item-card{padding:13px 16px}
+.item-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.item-head input.iname{flex:1;min-width:120px;font-weight:700;border-color:transparent;padding:6px 8px}
+.item-head input.iname:hover,.item-head input.iname:focus{border-color:var(--line)}
+.item-head input.iqty{width:58px;min-width:58px;text-align:center;padding:6px 4px}
+.pchips{margin-top:6px}
+.pchip{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);
+  background:#fff;border-radius:10px;padding:6px 11px;margin:5px 8px 0 0;cursor:pointer;
+  font-size:14.5px;font-weight:600;font-family:inherit;color:var(--text);transition:all .12s}
+.pchip:hover{border-color:var(--accent)}
+.pchip b{font-size:15.5px}
+.pchip .sn{color:var(--muted);font-weight:700;font-size:13px}
+.pchip.low{border-color:var(--ok);background:var(--ok-soft)}
+.pchip.low .sn,.pchip.low b{color:var(--ok)}
+.pchip .x{color:var(--muted);font-size:12px;padding:2px 4px;border-radius:5px}
+.pchip .x:hover{color:var(--danger);background:var(--danger-soft)}
+/* 結算 */
+.tier-row{display:flex;gap:6px;align-items:center;margin:3px 0}
+.tier-row input{min-width:0;width:96px;padding:6px 8px;font-size:14px}
+.tier-row .pct{width:64px}
+.store-card h2{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rate-line{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.footbar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);
+  border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  display:flex;gap:10px;justify-content:center;z-index:40;backdrop-filter:blur(6px)}
+.footbar .best-line{font-size:14px;font-weight:700;color:var(--ink);align-self:center}
+.footbar .best-line b{color:var(--ok)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <h1>日本藥妝比價</h1>
+    <span class="sub">路過就記一筆，結帳前再算免稅＋券 · v1.2</span>
+  </header>
+
+  <div class="tabs no-print">
+    <button class="tab active" data-tab="log" onclick="switchTab('log')">隨手記</button>
+    <button class="tab" data-tab="checkout" onclick="switchTab('checkout')">結算</button>
+    <button class="tab" data-tab="stores" onclick="switchTab('stores')">店家</button>
+    <button class="tab" data-tab="settings" onclick="switchTab('settings')">設定</button>
+  </div>
+
+  <!-- ============ 隨手記 ============ -->
+  <section id="tab-log">
+    <div class="card quick no-print">
+      <div class="qstores" id="qStores"></div>
+      <div class="qadd" id="qAdd" style="display:none"></div>
+      <div class="qrow">
+        <input type="text" id="qName" list="qNames" placeholder="商品名" autocomplete="off">
+        <datalist id="qNames"></datalist>
+        <input type="number" id="qPrice" inputmode="decimal" min="0" step="1" placeholder="¥">
+        <button class="btn accent" onclick="quickAdd()">記下</button>
+      </div>
+      <p class="hint" id="qHint" style="margin:8px 0 0">選店 → 打商品名（打過的會自動出現）→ 填標價 → 記下。同商品同店再記會覆蓋。</p>
+    </div>
+
+    <div id="logList"></div>
+    <div class="row no-print" style="margin-top:4px">
+      <button class="btn ghost" onclick="clearPrices()">清空所有價格</button>
+    </div>
+  </section>
+
+  <!-- ============ 結算 ============ -->
+  <section id="tab-checkout" style="display:none">
+    <div class="card">
+      <h2>整車去哪家結最划算</h2>
+      <p class="hint" style="margin-bottom:8px">把記到的商品全部在同一家買的比較：套各店優惠券級距、免稅門檻（都用整車金額自動判定）、付款回饋，換算台幣。</p>
+      <div class="tbl-scroll"><table id="sumTable"></table></div>
+      <p class="hint" id="sumNote" style="margin:8px 0 0"></p>
+    </div>
+    <p class="hint">預設優惠為 2026-07 參考值，進店以現場公告／你手上的券為準（「店家」分頁可改）。台幣為參考價，實際依刷卡結算。</p>
+  </section>
+
+  <!-- ============ 店家 ============ -->
+  <section id="tab-stores" style="display:none">
+    <div class="card">
+      <h2>這趟要比的店</h2>
+      <p class="hint">點一下切換要不要比。預設優惠為 2026-07 網路公開券的參考值，<b>實際以現場公告／你手上的券為準</b>，可在下方逐店修改。</p>
+      <div id="storeChips"></div>
+      <div class="divider"></div>
+      <div class="row">
+        <label class="field">從常見店加入
+          <select id="presetSel"></select>
+        </label>
+        <button class="btn ghost" onclick="addPreset()">加入</button>
+        <button class="btn ghost" onclick="addCustomStore()">＋ 自訂店家</button>
+      </div>
+    </div>
+    <div id="storeList"></div>
+  </section>
+
+  <!-- ============ 設定 ============ -->
+  <section id="tab-settings" style="display:none">
+    <div class="card">
+      <h2>匯率（日圓 → 台幣）</h2>
+      <div class="rate-line">
+        <label class="field">1 日圓 ≈ 台幣
+          <input type="number" id="rateInput" step="0.001" min="0" style="width:110px" onchange="setRate(this.value,'manual')">
+        </label>
+        <button class="btn accent" onclick="fetchRate()">抓即時匯率</button>
+        <span class="hint" id="rateInfo" style="margin:0"></span>
+      </div>
+      <p class="hint" style="margin:10px 0 0">斷網也能用：抓不到就沿用上次或手動輸入的匯率。台幣金額僅供參考，實際依刷卡結算為準。</p>
+    </div>
+
+    <div class="card">
+      <h2>付款回饋</h2>
+      <div class="row">
+        <label class="field">回饋 %（信用卡／支付）
+          <input type="number" id="cashbackInput" step="0.1" min="0" max="30" style="width:110px" onchange="setCashback(this.value)">
+        </label>
+      </div>
+      <p class="hint" style="margin:10px 0 0">例：JCB 海外回饋 3 就填 3。會從實付金額扣掉回饋當作「實付成本」，全店共用。</p>
+    </div>
+
+    <div class="card">
+      <h2>價格輸入方式</h2>
+      <div class="row">
+        <label class="switch"><input type="radio" name="pmode" value="excl" onchange="setPriceMode('excl')">未稅價（本体価格）</label>
+        <label class="switch"><input type="radio" name="pmode" value="incl" onchange="setPriceMode('incl')">含稅價（税込）</label>
+      </div>
+      <p class="hint" style="margin:10px 0 0">日本標價通常大字是未稅（本体）、小字是含稅（税込）。建議記<b>未稅價</b>最準；若你抄的是含稅價就切到含稅，結算會自動換算。同一趟請統一用一種記法。</p>
+    </div>
+
+    <div class="card">
+      <h2>資料備份</h2>
+      <div class="row">
+        <button class="btn ghost" onclick="exportData()">匯出 JSON</button>
+        <button class="btn ghost" onclick="document.getElementById('importFile').click()">匯入 JSON</button>
+        <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(this)">
+        <button class="btn danger" onclick="resetAll()">全部重設</button>
+      </div>
+      <p class="hint" style="margin:10px 0 0">資料只存在這台裝置的瀏覽器裡，不會上傳。換裝置用匯出／匯入搬。</p>
+    </div>
+
+    <div class="card">
+      <h2>免稅制度提醒</h2>
+      <p class="hint" style="margin:0">日本免稅（消費税 10%）門檻：同店同日<b>未稅滿 ¥5,000</b>。<b>2026 年 11 月 1 日起改為「退稅制（リファンド方式）」</b>：結帳先付含稅價，離境時在機場辦退稅。11 月以後的行程，比價邏輯不變（一樣省 10%），只是拿回來的時間點改成離境時。詳見 guide.html。</p>
+    </div>
+  </section>
+</div>
+
+<div class="footbar no-print" id="footbar" style="display:none">
+  <span class="best-line" id="footBest"></span>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ================= 儲存（localStorage 失效時退回記憶體） ================= */
+const KEY='drugstore-compare-v1';
+let memStore=null;
+function loadRaw(){ try{return localStorage.getItem(KEY);}catch(e){return memStore;} }
+function saveRaw(v){ try{localStorage.setItem(KEY,v);}catch(e){memStore=v;} }
+
+/* ================= 預設店家（2026-07 參考值，門檻皆為未稅金額） ================= */
+const PRESETS=[
+ {key:'daikoku', name:'大國藥妝',   taxfree:true, threshold:5000, tiers:[{min:10000,pct:3},{min:30000,pct:5},{min:50000,pct:8}]},
+ {key:'matsukiyo',name:'松本清',    taxfree:true, threshold:5000, tiers:[{min:10000,pct:3},{min:30000,pct:5},{min:50000,pct:7}]},
+ {key:'loft',    name:'LOFT',       taxfree:true, threshold:5000, tiers:[]},
+ {key:'donki',   name:'唐吉訶德',   taxfree:true, threshold:5000, tiers:[{min:10000,pct:5},{min:50000,pct:7}]},
+ {key:'sundrug', name:'SUNDRUG',    taxfree:true, threshold:5000, tiers:[{min:10000,pct:3},{min:30000,pct:5},{min:50000,pct:7}]},
+ {key:'cosmos',  name:'COSMOS',     taxfree:true, threshold:5000, tiers:[{min:10000,pct:5},{min:30000,pct:7},{min:50000,pct:9}]},
+ {key:'welcia',  name:'Welcia',     taxfree:true, threshold:5000, tiers:[{min:10000,pct:3},{min:30000,pct:5},{min:50000,pct:8}]},
+ {key:'tsuruha', name:'鶴羽藥妝',   taxfree:true, threshold:5000, tiers:[{min:10000,pct:3},{min:30000,pct:5},{min:50000,pct:7}]},
+ {key:'satsudora',name:'札幌藥妝',  taxfree:true, threshold:5000, tiers:[{min:5000,pct:5}]},
+ {key:'kokumin', name:'Kokumin',    taxfree:true, threshold:5000, tiers:[{min:5500,pct:3},{min:10000,pct:5},{min:30000,pct:8}]},
+ {key:'sugi',    name:'SUGI藥局',   taxfree:true, threshold:5000, tiers:[{min:10000,pct:4},{min:30000,pct:6},{min:50000,pct:8}]},
+];
+const DEFAULT_ACTIVE=['daikoku','matsukiyo','loft','donki'];
+
+/* ================= 狀態 ================= */
+let state=null, uid=0, qSelStore=null;
+function newId(p){ return p+'_'+(++uid)+'_'+Math.floor(performance.now()); }
+function defaultState(){
+  return {
+    settings:{rate:0.21, rateTime:null, rateSrc:'manual', cashback:0, priceMode:'excl'},
+    stores:PRESETS.filter(p=>DEFAULT_ACTIVE.includes(p.key)).map(p=>({
+      id:'s_'+p.key, preset:p.key, name:p.name, taxfree:p.taxfree,
+      threshold:p.threshold, tiers:p.tiers.map(t=>({...t})), active:true})),
+    items:[]
+  };
+}
+function load(){
+  const raw=loadRaw();
+  if(raw){ try{ state=JSON.parse(raw); }catch(e){ state=null; } }
+  if(!state || !state.settings || !Array.isArray(state.stores) || !Array.isArray(state.items)) state=defaultState();
+  /* v1 → v1.1：清掉 v1 的空白示範列 */
+  state.items=state.items.filter(it=>(it.name||'').trim()!==''||Object.keys(it.prices||{}).length);
+}
+function save(){ saveRaw(JSON.stringify(state)); }
+
+/* ================= 小工具 ================= */
+function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function yen(n){ return '¥'+Math.round(n).toLocaleString('en-US'); }
+function twd(n){ return 'NT$'+Math.round(n*state.settings.rate).toLocaleString('en-US'); }
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove('show'),2200);
+}
+function activeStores(){ return state.stores.filter(s=>s.active); }
+function num(v){ const n=parseFloat(v); return isFinite(n)?n:null; }
+function itemHasName(it){ return (it.name||'').trim()!==''; }
+function anyPrice(it){ return Object.values(it.prices||{}).some(v=>num(v)!==null&&num(v)>0); }
+
+/* ================= 計算核心（結算用） ================= */
+function calcStore(s){
+  const mode=state.settings.priceMode, cb=state.settings.cashback||0;
+  let sub=0, missing=0, lines=[];
+  for(const it of state.items){
+    const p=num(it.prices[s.id]);
+    if(p===null||p<=0){ if(itemHasName(it)||anyPrice(it)) missing++; continue; }
+    const r=it.rate8?0.08:0.10;
+    const excl=mode==='incl'? p/(1+r) : p;
+    lines.push({excl, qty:it.qty||1, r});
+    sub+=excl*(it.qty||1);
+  }
+  const pct=tierPct(s,sub);
+  const disc=sub*(1-pct/100);
+  const taxfree=!!s.taxfree && disc>=(s.threshold||5000) && sub>0;
+  let pay;
+  if(taxfree) pay=disc;
+  else pay=lines.reduce((a,l)=>a+l.excl*l.qty*(1-pct/100)*(1+l.r),0);
+  const cbAmt=pay*cb/100;
+  return {sub,pct,disc,taxfree,pay,cb:cbAmt,net:pay-cbAmt,missing,count:lines.length};
+}
+function tierPct(s,sub){
+  let pct=0;
+  for(const t of (s.tiers||[])){
+    const m=num(t.min)??0, p=num(t.pct)??0;
+    if(sub>=m && p>pct) pct=p;
+  }
+  return sub>0?pct:0;
+}
+
+/* ================= 隨手記 ================= */
+function normName(s){ return String(s||'').trim().replace(/\s+/g,' '); }
+let qAddOpen=false;
+function renderQuick(){
+  const stores=activeStores();
+  if(!stores.find(s=>s.id===qSelStore)) qSelStore=stores.length?stores[0].id:null;
+  document.getElementById('qStores').innerHTML=
+    stores.map(s=>`<button class="tab ${s.id===qSelStore?'active':''}" onclick="qPickStore('${s.id}')">${esc(s.name)}</button>`).join('')
+    +`<button class="tab plus" onclick="qToggleAdd()" title="加一家店">${qAddOpen?'－收合':'＋加店'}</button>`;
+  /* ＋加店面板：常見店點一下就加，也可自訂 */
+  const panel=document.getElementById('qAdd');
+  if(qAddOpen){
+    const used=new Set(state.stores.map(s=>s.preset));
+    const inactive=state.stores.filter(s=>!s.active);
+    const presets=PRESETS.filter(p=>!used.has(p.key));
+    panel.innerHTML='<p class="hint">點一下就加進比價：</p>'
+      +inactive.map(s=>`<button class="tab" onclick="qEnableStore('${s.id}')">${esc(s.name)}</button>`).join('')
+      +presets.map(p=>`<button class="tab" onclick="qAddPreset('${p.key}')">${esc(p.name)}</button>`).join('')
+      +`<button class="tab" onclick="qAddCustom()">✎ 自訂店名…</button>`
+      +((inactive.length||presets.length)?'':'')
+      +'<p class="hint" style="margin:6px 0 0">優惠券級距想調整→「店家」分頁。</p>';
+    panel.style.display='';
+  }else panel.style.display='none';
+  document.getElementById('qNames').innerHTML=state.items.filter(itemHasName)
+    .map(it=>`<option value="${esc(it.name)}">`).join('');
+}
+function qPickStore(id){ qSelStore=id; renderQuick(); document.getElementById('qName').focus(); }
+function qToggleAdd(){ qAddOpen=!qAddOpen; renderQuick(); }
+function qEnableStore(id){
+  const s=state.stores.find(x=>x.id===id); if(!s) return;
+  s.active=true; qSelStore=id; qAddOpen=false;
+  save(); renderStores(); renderLog(); toast('已加入 '+s.name);
+}
+function qAddPreset(key){
+  const p=PRESETS.find(x=>x.key===key); if(!p) return;
+  const ns={id:newId('s'), preset:p.key, name:p.name, taxfree:p.taxfree,
+    threshold:p.threshold, tiers:p.tiers.map(t=>({...t})), active:true};
+  state.stores.push(ns); qSelStore=ns.id; qAddOpen=false;
+  save(); renderStores(); renderLog(); toast('已加入 '+p.name+'（券級距為參考值，可在「店家」分頁調）');
+}
+function qAddCustom(){
+  const name=prompt('店家名稱？'); if(!name||!name.trim()) return;
+  const ns={id:newId('s'), preset:null, name:name.trim(), taxfree:true, threshold:5000, tiers:[], active:true};
+  state.stores.push(ns); qSelStore=ns.id; qAddOpen=false;
+  save(); renderStores(); renderLog(); toast('已加入 '+ns.name);
+}
+function quickAdd(){
+  const nameEl=document.getElementById('qName'), priceEl=document.getElementById('qPrice');
+  const name=normName(nameEl.value), price=num(priceEl.value);
+  if(!qSelStore){ toast('先選店'); return; }
+  if(!name){ toast('先打商品名'); nameEl.focus(); return; }
+  if(price===null||price<=0){ toast('價格要是正數'); priceEl.focus(); return; }
+  let it=state.items.find(x=>normName(x.name)===name);
+  const isNew=!it;
+  if(!it){ it=({id:newId('i'), name, qty:1, rate8:false, prices:{}}); state.items.unshift(it); }
+  const existed=num(it.prices[qSelStore])!==null;
+  it.prices[qSelStore]=price;
+  save(); renderLog();
+  const sName=(state.stores.find(s=>s.id===qSelStore)||{}).name||'';
+  toast((existed?'已覆蓋：':'已記：')+name+' ¥'+price.toLocaleString()+'＠'+sName);
+  nameEl.value=''; priceEl.value='';
+  nameEl.focus();
+}
+function editEntry(itemId,storeId){
+  const it=state.items.find(x=>x.id===itemId); if(!it) return;
+  qSelStore=storeId; renderQuick();
+  document.getElementById('qName').value=it.name;
+  const p=num(it.prices[storeId]);
+  document.getElementById('qPrice').value=(p===null?'':p);
+  window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('qPrice').focus();
+}
+function delEntry(ev,itemId,storeId){
+  ev.stopPropagation();
+  const it=state.items.find(x=>x.id===itemId); if(!it) return;
+  delete it.prices[storeId];
+  save(); renderLog();
+}
+function renderLog(){
+  renderQuick();
+  const box=document.getElementById('logList');
+  const stores=activeStores();
+  if(!state.items.length){
+    box.innerHTML='<p class="empty">還沒記任何東西。路過看到想買的，上面選店、打名字、填價格就記下。</p>';
+    recalc(); return;
+  }
+  box.innerHTML=state.items.map(it=>{
+    /* 找此商品最低原始標價（同一種記法下直接可比） */
+    let low=null, lowV=Infinity;
+    for(const s of stores){
+      const p=num(it.prices[s.id]);
+      if(p!==null&&p>0&&p<lowV){ lowV=p; low=s.id; }
+    }
+    const chips=stores.filter(s=>num(it.prices[s.id])!==null&&num(it.prices[s.id])>0).map(s=>{
+      const p=num(it.prices[s.id]);
+      const isLow=s.id===low&&chipsCount(it,stores)>1;
+      return `<button class="pchip ${isLow?'low':''}" onclick="editEntry('${it.id}','${s.id}')" title="點一下修改">
+        <span class="sn">${esc(s.name)}</span><b>¥${p.toLocaleString('en-US')}</b>${isLow?'<span class="sn">✓最低</span>':''}
+        <span class="x" onclick="delEntry(event,'${it.id}','${s.id}')" title="刪除這筆">✕</span></button>`;
+    }).join('');
+    return `<div class="card item-card">
+      <div class="item-head">
+        <input class="iname" type="text" value="${esc(it.name)}" placeholder="商品名"
+          onchange="setItemName('${it.id}',this.value)">
+        <label class="field" style="flex:none">數量
+          <input class="iqty" type="number" min="1" step="1" value="${it.qty||1}"
+            onchange="setItemQty('${it.id}',this.value)"></label>
+        <label class="switch" title="食品飲料類消費稅 8%"><input type="checkbox" ${it.rate8?'checked':''}
+          onchange="setItemRate8('${it.id}',this.checked)">8%</label>
+        <button class="icon danger" onclick="delItem('${it.id}')" title="刪除商品">✕</button>
+      </div>
+      <div class="pchips">${chips||'<span class="empty" style="padding:2px 0;display:inline-block">尚無價格——上面選店記一筆</span>'}</div>
+    </div>`;
+  }).join('');
+  recalc();
+}
+function chipsCount(it,stores){
+  return stores.reduce((a,s)=>{const p=num(it.prices[s.id]);return a+((p!==null&&p>0)?1:0);},0);
+}
+function setItemName(id,v){
+  const it=state.items.find(x=>x.id===id); if(!it) return;
+  const name=normName(v);
+  if(!name){ renderLog(); return; }
+  const dup=state.items.find(x=>x.id!==id&&normName(x.name)===name);
+  if(dup){ toast('已有同名商品，改回原名'); renderLog(); return; }
+  it.name=name; save(); renderQuick();
+}
+function setItemQty(id,v){ const it=state.items.find(x=>x.id===id); if(it){ it.qty=Math.max(1,Math.round(num(v)||1)); recalc(); } }
+function setItemRate8(id,v){ const it=state.items.find(x=>x.id===id); if(it){ it.rate8=!!v; recalc(); } }
+function delItem(id){
+  const it=state.items.find(x=>x.id===id);
+  if(it && (itemHasName(it)||anyPrice(it)) && !confirm('刪除「'+(it.name||'未命名商品')+'」？')) return;
+  state.items=state.items.filter(x=>x.id!==id);
+  save(); renderLog();
+}
+function clearPrices(){
+  if(!confirm('清空所有商品的價格（保留商品名）？')) return;
+  state.items.forEach(it=>it.prices={});
+  save(); renderLog(); toast('已清空價格');
+}
+
+/* ================= 結算表 ================= */
+function recalc(){
+  const stores=activeStores();
+  const results=stores.map(s=>({s,r:calcStore(s)}));
+  const tbl=document.getElementById('sumTable');
+  const valid=results.filter(x=>x.r.count>0);
+  const complete=valid.filter(x=>x.r.missing===0);
+  const pool=complete.length?complete:valid;
+  let winId=null;
+  if(pool.length){ winId=pool.reduce((a,b)=>b.r.net<a.r.net?b:a).s.id; }
+  const fb=document.getElementById('footbar');
+  if(!valid.length){
+    tbl.innerHTML='<tr><td class="empty">到「隨手記」記幾筆價格，這裡會列出每家的實付總額。</td></tr>';
+    document.getElementById('sumNote').textContent='';
+    fb.dataset.want='none';
+  }else{
+    let html='<tr><th>店家</th><th>未稅小計</th><th>券折</th><th>免稅</th><th>回饋</th><th>實付成本</th><th>約台幣</th></tr>';
+    for(const {s,r} of results){
+      if(r.count===0){ html+=`<tr><td>${esc(s.name)}</td><td colspan="6" class="muted">尚未記到價格</td></tr>`; continue; }
+      const win=s.id===winId;
+      const missTag=r.missing?` <span class="badge none">缺${r.missing}項</span>`:'';
+      html+=`<tr class="${win?'win':''}">
+        <td><b>${esc(s.name)}</b>${win?' <span class="badge auto">最划算</span>':''}${missTag}</td>
+        <td>${yen(r.sub)}</td>
+        <td>${r.pct?('-'+r.pct+'%'):'—'}</td>
+        <td>${r.taxfree?'<span class="badge auto">免稅</span>':'<span class="muted">+消費稅</span>'}</td>
+        <td>${r.cb?('-'+yen(r.cb)):'—'}</td>
+        <td class="sum-net">${yen(r.net)}</td>
+        <td>${twd(r.net)}</td></tr>`;
+    }
+    tbl.innerHTML=html;
+    const noteBits=[];
+    if(complete.length===0&&valid.length) noteBits.push('目前每家都有缺價格的商品，總額僅供參考（缺的算不進去）。');
+    const notFree=results.filter(x=>x.r.count>0&&x.s.taxfree&&!x.r.taxfree);
+    if(notFree.length) noteBits.push(notFree.map(x=>esc(x.s.name)+'（門檻未稅 ¥'+(x.s.threshold||5000).toLocaleString()+'）').join('、')+'：未達免稅門檻，以含稅計。');
+    document.getElementById('sumNote').innerHTML=noteBits.join('　');
+    if(winId){
+      const w=results.find(x=>x.s.id===winId);
+      document.getElementById('footBest').innerHTML=`整車最划算：<b>${esc(w.s.name)}</b> ${yen(w.r.net)}（${twd(w.r.net)}）`;
+      fb.dataset.want='flex';
+    }else fb.dataset.want='none';
+  }
+  fb.style.display=(currentTab==='checkout')?(fb.dataset.want||'none'):'none';
+  save();
+}
+
+/* ================= 店家頁 ================= */
+function renderStores(){
+  document.getElementById('storeChips').innerHTML=state.stores.map(s=>
+    `<button class="tab ${s.active?'active':''}" onclick="toggleStore('${s.id}')">${esc(s.name)}</button>`).join('')
+    || '<p class="empty">尚無店家，從下方加入。</p>';
+  const used=new Set(state.stores.map(s=>s.preset));
+  document.getElementById('presetSel').innerHTML=PRESETS.filter(p=>!used.has(p.key))
+    .map(p=>`<option value="${p.key}">${esc(p.name)}</option>`).join('')
+    || '<option value="">（常見店都加入了）</option>';
+  document.getElementById('storeList').innerHTML=state.stores.map(s=>{
+    const tiers=(s.tiers||[]).map((t,i)=>`
+      <div class="tier-row">
+        <span class="muted" style="font-size:13px">未稅滿</span>
+        <input type="number" min="0" step="500" value="${t.min}" onchange="setTier('${s.id}',${i},'min',this.value)">
+        <span class="muted" style="font-size:13px">折</span>
+        <input class="pct" type="number" min="0" max="50" step="0.5" value="${t.pct}" onchange="setTier('${s.id}',${i},'pct',this.value)">
+        <span class="muted" style="font-size:13px">%</span>
+        <button class="icon danger" onclick="delTier('${s.id}',${i})">✕</button>
+      </div>`).join('');
+    return `<div class="card store-card">
+      <h2>${esc(s.name)}
+        <span class="badge ${s.active?'auto':'none'}">${s.active?'比價中':'未加入比價'}</span>
+        <button class="icon" onclick="renameStore('${s.id}')">改名</button>
+        <button class="icon danger" onclick="delStore('${s.id}')">刪除</button>
+      </h2>
+      <div class="row" style="margin:8px 0 4px">
+        <label class="switch"><input type="checkbox" ${s.taxfree?'checked':''}
+          onchange="setStoreTaxfree('${s.id}',this.checked)">可免稅</label>
+        <label class="field">免稅門檻（未稅 ¥）
+          <input type="number" min="0" step="500" value="${s.threshold||5000}" style="width:110px"
+            onchange="setStoreThreshold('${s.id}',this.value)" ${s.taxfree?'':'disabled'}></label>
+      </div>
+      <div class="divider" style="margin:10px 0"></div>
+      <p class="hint" style="margin:0 0 6px">優惠券級距（取符合的最高一檔；門檻用未稅小計）</p>
+      ${tiers||'<p class="empty" style="padding:4px 0">無折扣券</p>'}
+      <button class="icon" style="margin-top:6px" onclick="addTier('${s.id}')">＋ 加一檔</button>
+    </div>`;
+  }).join('');
+}
+function toggleStore(id){ const s=state.stores.find(x=>x.id===id); if(s){ s.active=!s.active; renderStores(); renderLog(); } }
+function addPreset(){
+  const key=document.getElementById('presetSel').value; if(!key) return;
+  const p=PRESETS.find(x=>x.key===key); if(!p) return;
+  state.stores.push({id:newId('s'), preset:p.key, name:p.name, taxfree:p.taxfree,
+    threshold:p.threshold, tiers:p.tiers.map(t=>({...t})), active:true});
+  renderStores(); renderLog(); toast('已加入 '+p.name);
+}
+function addCustomStore(){
+  const name=prompt('店家名稱？'); if(!name||!name.trim()) return;
+  state.stores.push({id:newId('s'), preset:null, name:name.trim(), taxfree:true,
+    threshold:5000, tiers:[], active:true});
+  renderStores(); renderLog();
+}
+function renameStore(id){
+  const s=state.stores.find(x=>x.id===id); if(!s) return;
+  const name=prompt('新名稱？',s.name); if(!name||!name.trim()) return;
+  s.name=name.trim(); renderStores(); renderLog();
+}
+function delStore(id){
+  const s=state.stores.find(x=>x.id===id); if(!s) return;
+  if(!confirm('刪除「'+s.name+'」？此店已記的價格也會一併刪除。')) return;
+  state.stores=state.stores.filter(x=>x.id!==id);
+  state.items.forEach(it=>delete it.prices[id]);
+  renderStores(); renderLog();
+}
+function setStoreTaxfree(id,v){ const s=state.stores.find(x=>x.id===id); if(s){ s.taxfree=!!v; renderStores(); recalc(); } }
+function setStoreThreshold(id,v){ const s=state.stores.find(x=>x.id===id); if(s){ s.threshold=Math.max(0,num(v)||0); recalc(); } }
+function addTier(id){ const s=state.stores.find(x=>x.id===id); if(s){ (s.tiers=s.tiers||[]).push({min:10000,pct:5}); renderStores(); recalc(); } }
+function delTier(id,i){ const s=state.stores.find(x=>x.id===id); if(s){ s.tiers.splice(i,1); renderStores(); recalc(); } }
+function setTier(id,i,k,v){ const s=state.stores.find(x=>x.id===id); if(s&&s.tiers[i]){ s.tiers[i][k]=Math.max(0,num(v)||0); recalc(); } }
+
+/* ================= 設定 ================= */
+function renderSettings(){
+  document.getElementById('rateInput').value=state.settings.rate;
+  document.getElementById('cashbackInput').value=state.settings.cashback||0;
+  document.querySelectorAll('input[name=pmode]').forEach(r=>r.checked=(r.value===state.settings.priceMode));
+  updateRateInfo();
+}
+function updateRateInfo(){
+  const s=state.settings, el=document.getElementById('rateInfo');
+  if(s.rateTime){
+    el.textContent=(s.rateSrc==='live'?'即時匯率':'手動設定')+' · '+new Date(s.rateTime).toLocaleString('zh-TW',{hour12:false});
+  }else el.textContent='預設參考值 0.21，建議按「抓即時匯率」或手動修正';
+}
+function setRate(v,src){
+  const n=num(v); if(n===null||n<=0){ toast('匯率要是正數'); renderSettings(); return; }
+  state.settings.rate=n; state.settings.rateSrc=src||'manual'; state.settings.rateTime=Date.now();
+  updateRateInfo(); recalc(); if(src!=='live') toast('已更新匯率');
+}
+function fetchRate(){
+  toast('抓取中…');
+  fetch('https://open.er-api.com/v6/latest/JPY').then(r=>r.json()).then(d=>{
+    const t=d&&d.rates&&d.rates.TWD;
+    if(t&&isFinite(t)){ setRate(t,'live'); renderSettings(); toast('已更新：1 日圓 ≈ '+t.toFixed(4)+' 台幣'); }
+    else throw new Error('no TWD');
+  }).catch(()=>toast('抓不到匯率（可能沒網路），請手動輸入'));
+}
+function setCashback(v){
+  const n=num(v); state.settings.cashback=(n===null||n<0)?0:Math.min(30,n);
+  renderSettings(); recalc();
+}
+function setPriceMode(m){ state.settings.priceMode=m; recalc(); toast(m==='excl'?'改用未稅價記錄':'改用含稅價記錄'); }
+
+/* ================= 備份 ================= */
+function exportData(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  const d=new Date();
+  a.download='drugstore-compare-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+function importData(inp){
+  const f=inp.files&&inp.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const d=JSON.parse(rd.result);
+      if(!d.settings||!Array.isArray(d.stores)||!Array.isArray(d.items)) throw new Error('bad');
+      state=d; save(); renderAll(); toast('匯入完成');
+    }catch(e){ toast('檔案格式不對，未匯入'); }
+    inp.value='';
+  };
+  rd.readAsText(f);
+}
+function resetAll(){
+  if(!confirm('全部重設？商品、店家設定、匯率都會回到預設值。'))return;
+  state=defaultState(); save(); renderAll(); toast('已重設');
+}
+
+/* ================= 分頁與啟動 ================= */
+let currentTab='log';
+function switchTab(t){
+  currentTab=t;
+  document.querySelectorAll('.tab[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  ['log','checkout','stores','settings'].forEach(x=>document.getElementById('tab-'+x).style.display=(x===t)?'':'none');
+  const fb=document.getElementById('footbar');
+  fb.style.display=(t==='checkout')?(fb.dataset.want||'none'):'none';
+  if(t==='checkout') recalc();
+}
+function renderAll(){ renderStores(); renderLog(); renderSettings(); }
+/* Enter＝記下（在快速列按 Enter 直接送出） */
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&(e.target.id==='qName'||e.target.id==='qPrice')){
+    if(e.target.id==='qName'&&document.getElementById('qPrice').value===''){ document.getElementById('qPrice').focus(); }
+    else quickAdd();
+    e.preventDefault();
+  }
+});
+load(); renderAll();
+</script>
+</body>
+</html>

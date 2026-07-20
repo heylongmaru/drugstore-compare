@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日本藥妝比價 · 操作說明</title>
+<!-- 05-drugstore-compare guide · v1.2 · 2026-07-20 -->
+<style>
+:root{
+  --ink:#1f2a33;--text:#2a3340;--muted:#6b7683;--line:#dbe1df;
+  --bg:#eef1ef;--card:#ffffff;--accent:#2c6e7f;--accent-soft:#e3eef0;
+  --ok:#2e7d5b;--ok-soft:#e2f0e9;--warn:#b5761a;--warn-soft:#f6ecd9;
+  --radius:12px;--radius-sm:8px;--radius-pill:999px;
+  --shadow:0 1px 2px rgba(31,42,51,.06),0 8px 24px rgba(31,42,51,.06);
+  --wrap-narrow:760px;
+  --font:"PingFang TC","Noto Sans TC","Microsoft JhengHei",-apple-system,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--font);color:var(--text);background:var(--bg);line-height:1.75;
+  font-size:15px;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+.wrap{max-width:var(--wrap-narrow);margin:0 auto;padding:22px 16px 80px}
+.eyebrow{font-size:12px;letter-spacing:.16em;color:var(--accent);font-weight:700;text-transform:uppercase}
+h1{font-size:26px;font-weight:800;margin:6px 0 8px;color:var(--ink)}
+h2{font-size:17px;font-weight:800;color:var(--ink);margin:0 0 8px}
+.lede{font-size:14.5px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.hint{color:var(--muted);font-size:13.5px}
+ol,ul{padding-left:1.4em;margin:8px 0}
+li{margin:6px 0}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{font-size:12px;color:var(--muted);font-weight:700}
+.notice{padding:12px 15px;border:1.5px solid #e2b4b4;background:#fdf2f2;border-radius:11px;
+  color:#c0392b;font-size:13.5px;line-height:1.7;font-weight:600;margin:0 0 16px}
+.tag{font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);
+  padding:2px 9px;border-radius:var(--radius-pill)}
+kbd{background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:1px 7px;font-size:13px;font-weight:700;font-family:inherit}
+a{color:var(--accent)}
+.back{display:inline-block;margin-top:8px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">APPs · 05-drugstore-compare</div>
+  <h1>日本藥妝比價 · 操作說明</h1>
+  <p class="lede">路過藥妝店看到想買的，隨手記一筆「這東西＠這家 ¥多少」；清單直接並排各店標價，一眼看出哪家便宜。要結帳前再開「結算」，工具套每家的優惠券級距、免稅 10%、匯率與刷卡回饋，告訴你「整車去哪家結最划算」。</p>
+  <a class="back" href="index.html">← 回到工具</a>
+
+  <div class="card">
+    <h2>快速上手</h2>
+    <ol>
+      <li><b>隨手記</b>：最上面那條——點一下店（在哪家就點哪家）→ 打商品名 → 填標價 → <kbd>記下</kbd>。打過的商品名會自動出現在選單，換一家店看到同商品，再記一筆就好。</li>
+      <li><b>看比價</b>：每個商品一列，各店價格並排（例：合利他命　大國 ¥3,980｜松本清 ¥4,200），最便宜的標 <kbd>✓最低</kbd>。點價格可修改、按 ✕ 刪那一筆。</li>
+      <li><b>結算</b>：要結帳前開「結算」分頁——「整批都在同一家買」每家的實付成本（套券級距＋免稅＋回饋）與台幣，綠色那家最划算。</li>
+    </ol>
+    <p class="hint">店家不夠用？隨手記店家列最後的 <kbd>＋加店</kbd> 點開，常見店點一下就加、也可自訂店名（預設放了大國、松本清、LOFT、唐吉訶德）。優惠券級距要調整才需要去「店家」分頁。</p>
+  </div>
+
+  <div class="card">
+    <h2>它是怎麼算的</h2>
+    <table>
+      <tr><th>步驟</th><th>內容</th></tr>
+      <tr><td>1. 未稅小計</td><td>把該店有填價格的商品 × 數量加總（若你切成「含稅價輸入」，會先除以 1.10 或 1.08 還原成未稅）。</td></tr>
+      <tr><td>2. 優惠券</td><td>依未稅小計自動套用該店符合的最高一檔折扣（例：松本清滿 ¥30,000 折 5%）。</td></tr>
+      <tr><td>3. 免稅</td><td>折後未稅金額 ≥ 該店免稅門檻（預設 ¥5,000）就整車免稅；沒達門檻就逐項加回消費稅（一般 10%、勾「8%食品」的算 8%）。</td></tr>
+      <tr><td>4. 回饋</td><td>再扣掉「設定」裡的付款回饋 %（例：JCB 3%），得到「實付成本」。</td></tr>
+      <tr><td>5. 台幣</td><td>用設定的匯率換算，僅供參考，實際依刷卡結算。</td></tr>
+    </table>
+    <p class="hint">「隨手記」清單上顯示的是<b>原始標價</b>（你抄什麼就顯示什麼，最直覺）；券、免稅、回饋只在「結算」分頁才算進去，因為級距與免稅門檻要看整車金額才成立。</p>
+  </div>
+
+  <div class="card">
+    <h2>內建優惠是「參考值」</h2>
+    <p class="hint" style="margin-top:0">預設各店級距取自 2026 年 7 月網路公開的觀光客優惠券整理（門檻皆為未稅金額、可與免稅併用）。<b>券常改版、且部分要出示指定 coupon 或指定卡別</b>，進店請以現場公告與你手上的券為準；不同就到「店家」分頁改數字，改完立刻生效。</p>
+    <table>
+      <tr><th>店</th><th>預設級距（未稅滿 → 折）</th></tr>
+      <tr><td>大國藥妝</td><td>¥10,000→3%｜¥30,000→5%｜¥50,000→8%</td></tr>
+      <tr><td>松本清／鶴羽／SUNDRUG</td><td>¥10,000→3%｜¥30,000→5%｜¥50,000→7%</td></tr>
+      <tr><td>COSMOS</td><td>¥10,000→5%｜¥30,000→7%｜¥50,000→9%</td></tr>
+      <tr><td>唐吉訶德</td><td>¥10,000→5%｜¥50,000→7%（另有版本為 ¥30,000→7%，依你拿到的券為準）</td></tr>
+      <tr><td>Welcia</td><td>¥10,000→3%｜¥30,000→5%｜¥50,000→8%</td></tr>
+      <tr><td>LOFT</td><td>無預設券（查無 2026 通用觀光客券，只算免稅 10%；你手上有券就自行加級距）</td></tr>
+      <tr><td>札幌藥妝</td><td>¥5,000→5%</td></tr>
+      <tr><td>SUGI藥局</td><td>¥10,000→4%｜¥30,000→6%｜¥50,000→8%</td></tr>
+      <tr><td>Kokumin</td><td>¥5,500→3%｜¥10,000→5%｜¥30,000→8%</td></tr>
+    </table>
+  </div>
+
+  <div class="notice">
+    <b>免稅制度 2026/11/1 起改制：</b>日本免稅改為「退稅制（リファンド方式）」——結帳先付含稅價，離境時在機場核對後退還消費稅。省的還是同樣的 10%，比價結論不變；差別是現金流（先墊稅金）與要留時間在機場辦退稅。11 月以後出發的行程請留意各店與機場的作業方式。
+  </div>
+
+  <div class="card">
+    <h2>小抄與注意</h2>
+    <ul>
+      <li><b>抄未稅價最準</b>：日本標價大字通常是未稅（本体価格）。若你抄的是含稅（税込）小字，到「設定」切成含稅輸入即可；<b>同一趟統一用一種記法</b>，各店標價才直接可比。</li>
+      <li><b>食品飲料勾 8%</b>：藥、化妝品、日用品是 10%；食品與飲料（不含酒）是 8%，商品列勾「8%食品」。</li>
+      <li><b>免稅另有上限與身分條件</b>：需出示護照，消耗品免稅原上限同店同日未稅 ¥500,000；細節依現場規定。</li>
+      <li><b>匯率</b>：「設定 → 抓即時匯率」需要網路；斷網會沿用上次抓到或手動輸入的值。</li>
+      <li><b>資料只存在這台裝置</b>：不上傳、不需登入。換裝置用「設定 → 匯出／匯入 JSON」。</li>
+      <li><b>回程重用</b>：下次出發前按「清空所有價格」，商品清單與店家設定會留著。</li>
+    </ul>
+  </div>
+
+  <p class="hint">v1.2 · 2026-07-20 · 預設級距參考來源：林氏璧〈2026日本藥妝優惠券Coupon懶人包〉（linshibi.com，2026-07 查閱）；唐吉訶德另一版本參考 LikeJapan 優惠券整理。券常改版，實際以現場為準。</p>
+  <a class="back" href="index.html">← 回到工具</a>
+</div>
+</body>
+</html>
