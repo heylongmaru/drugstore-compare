@@ -6,7 +6,11 @@
 <title>日本藥妝比價</title>
 <!-- ============================================================
      05-drugstore-compare · 日本藥妝比價小工具
-     v1.2 · 2026-07-20
+     v1.3 · 2026-07-20
+     v1.3：(1)未稅/含稅選擇移到隨手記最上面、預設「含稅(税込)」——因日本
+              2021/4 起法規強制標示税込總額，這是每家一定都有的數字，統一記最不會錯。
+           (2)付款回饋改為卡片選單：內建玉山熊本熊卡、聯邦吉鶴卡（皆日本基礎 2.5%
+              無上限，附高回饋條件提醒），可自訂其他卡。回饋率保守取基礎值、不寫死宣傳值。
      v1.2：隨手記的店家列直接「＋」加店（常見店點一下就加，也可自訂）。
      v1.1：改為「隨手記」流程——路過看到就記「商品＠店 ¥價」，
            清單顯示各店原始標價；免稅＋券級距搬到「結算」分頁。
@@ -107,6 +111,19 @@ th{font-size:12px;color:var(--muted);font-weight:700}
 .qstores{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .qstores .tab{padding:7px 13px;font-size:14px}
 .qstores .tab.plus{border-style:dashed;color:var(--accent);border-color:var(--accent)}
+.qmode{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.qmode-lb{font-size:13px;font-weight:700;color:var(--muted)}
+.qmode-hint{font-size:12px;color:var(--muted);flex-basis:100%;margin-top:2px;line-height:1.5}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--radius-pill);overflow:hidden;background:#fff}
+.seg-btn{appearance:none;border:0;background:#fff;color:var(--muted);font-family:inherit;font-weight:700;
+  font-size:14px;padding:7px 15px;cursor:pointer;transition:all .12s}
+.seg-btn.active{background:var(--accent);color:#fff}
+/* 付款回饋卡片選單 */
+.cards-wrap{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 6px}
+.cardnote{border:1px solid var(--line);background:var(--accent-soft);border-radius:var(--radius-sm);
+  padding:10px 13px;font-size:13px;line-height:1.65;color:var(--text);margin:8px 0 0}
+.cardnote b{color:var(--accent)}
+.card-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
 .qadd{margin:0 0 10px;padding:10px 12px;border:1.5px dashed var(--accent);border-radius:var(--radius-sm);background:var(--accent-soft)}
 .qadd .hint{margin:0 0 6px}
 .qadd .tab{padding:6px 12px;font-size:14px;margin:2px 4px 2px 0}
@@ -149,7 +166,7 @@ th{font-size:12px;color:var(--muted);font-weight:700}
 <div class="wrap">
   <header class="app">
     <h1>日本藥妝比價</h1>
-    <span class="sub">路過就記一筆，結帳前再算免稅＋券 · v1.2</span>
+    <span class="sub">路過就記一筆，結帳前再算免稅＋券 · v1.3</span>
   </header>
 
   <div class="tabs no-print">
@@ -162,6 +179,14 @@ th{font-size:12px;color:var(--muted);font-weight:700}
   <!-- ============ 隨手記 ============ -->
   <section id="tab-log">
     <div class="card quick no-print">
+      <div class="qmode">
+        <span class="qmode-lb">記的是</span>
+        <div class="seg" id="qMode">
+          <button class="seg-btn" data-m="incl" onclick="setPriceMode('incl')">含稅 税込</button>
+          <button class="seg-btn" data-m="excl" onclick="setPriceMode('excl')">未稅 本体</button>
+        </div>
+        <span class="qmode-hint" id="qModeHint"></span>
+      </div>
       <div class="qstores" id="qStores"></div>
       <div class="qadd" id="qAdd" style="display:none"></div>
       <div class="qrow">
@@ -223,22 +248,18 @@ th{font-size:12px;color:var(--muted);font-weight:700}
     </div>
 
     <div class="card">
-      <h2>付款回饋</h2>
-      <div class="row">
-        <label class="field">回饋 %（信用卡／支付）
-          <input type="number" id="cashbackInput" step="0.1" min="0" max="30" style="width:110px" onchange="setCashback(this.value)">
+      <h2>付款回饋（信用卡／支付）</h2>
+      <p class="hint" style="margin:0 0 6px">選一張要用的卡，結算會從實付扣掉回饋當「實付成本」。內建卡用<b>保守的日本基礎回饋</b>，宣傳的高%多要登錄＋指定通路＋有上限，見下方提醒；不準就自己改。</p>
+      <div class="cards-wrap" id="cardChips"></div>
+      <div class="card-row">
+        <label class="field">回饋 %
+          <input type="number" id="cashbackInput" step="0.1" min="0" max="30" style="width:100px" onchange="setCashback(this.value)">
         </label>
+        <button class="btn ghost sm" onclick="addCustomCard()">＋ 自訂卡</button>
+        <button class="icon danger" id="delCardBtn" style="display:none" onclick="delActiveCard()">刪這張卡</button>
       </div>
-      <p class="hint" style="margin:10px 0 0">例：JCB 海外回饋 3 就填 3。會從實付金額扣掉回饋當作「實付成本」，全店共用。</p>
-    </div>
-
-    <div class="card">
-      <h2>價格輸入方式</h2>
-      <div class="row">
-        <label class="switch"><input type="radio" name="pmode" value="excl" onchange="setPriceMode('excl')">未稅價（本体価格）</label>
-        <label class="switch"><input type="radio" name="pmode" value="incl" onchange="setPriceMode('incl')">含稅價（税込）</label>
-      </div>
-      <p class="hint" style="margin:10px 0 0">日本標價通常大字是未稅（本体）、小字是含稅（税込）。建議記<b>未稅價</b>最準；若你抄的是含稅價就切到含稅，結算會自動換算。同一趟請統一用一種記法。</p>
+      <div class="cardnote" id="cardNote" style="display:none"></div>
+      <p class="hint" style="margin:10px 0 0">回饋率會影響比價，但因各卡條件多、常改版，<b>請以發卡行當期公告為準</b>。不用卡就選「不算回饋」。</p>
     </div>
 
     <div class="card">
@@ -288,12 +309,24 @@ const PRESETS=[
 ];
 const DEFAULT_ACTIVE=['daikoku','matsukiyo','loft','donki'];
 
+/* ================= 內建付款回饋卡（2026-07 查證；日本一般消費基礎回饋，皆無上限） ================= */
+/* 重要：只放「保守可靠」的基礎回饋率；宣傳的高%都要登錄＋指定通路＋有回饋上限，寫成 note 提醒，不寫死。 */
+const CARD_PRESETS=[
+ {key:'kumamon', name:'玉山熊本熊卡', rate:2.5,
+  note:'日本一般消費 2.5%、無上限。藥妝（松本清／大國等「熊好買」指定通路）登錄當期活動最高 8.5%，但每期加碼回饋上限約 NT$500（刷越多越被攤薄），超過部分回 2.5%。工具預設用保守的 2.5%；確定在上限內想算 8.5% 再自己改。以玉山當期公告為準。'},
+ {key:'jiho',    name:'聯邦吉鶴卡',   rate:2.5,
+  note:'日幣消費 2.5%、無上限。指定通路／綁 Apple Pay 有加碼但有每月上限；宣傳的 11% 是「台灣國內日系餐廳」不是日本當地。工具預設用 2.5%。以聯邦當期公告為準。'},
+];
+function allCards(){ return [...CARD_PRESETS, ...((state.settings.cards)||[])]; }
+function findCard(key){ return allCards().find(c=>c.key===key)||null; }
+
 /* ================= 狀態 ================= */
 let state=null, uid=0, qSelStore=null;
 function newId(p){ return p+'_'+(++uid)+'_'+Math.floor(performance.now()); }
 function defaultState(){
   return {
-    settings:{rate:0.21, rateTime:null, rateSrc:'manual', cashback:0, priceMode:'excl'},
+    settings:{rate:0.21, rateTime:null, rateSrc:'manual', cashback:0, priceMode:'incl',
+      activeCardKey:'none', cards:[]},
     stores:PRESETS.filter(p=>DEFAULT_ACTIVE.includes(p.key)).map(p=>({
       id:'s_'+p.key, preset:p.key, name:p.name, taxfree:p.taxfree,
       threshold:p.threshold, tiers:p.tiers.map(t=>({...t})), active:true})),
@@ -306,6 +339,10 @@ function load(){
   if(!state || !state.settings || !Array.isArray(state.stores) || !Array.isArray(state.items)) state=defaultState();
   /* v1 → v1.1：清掉 v1 的空白示範列 */
   state.items=state.items.filter(it=>(it.name||'').trim()!==''||Object.keys(it.prices||{}).length);
+  /* → v1.3：補上新設定欄位 */
+  if(!('activeCardKey' in state.settings)) state.settings.activeCardKey='none';
+  if(!Array.isArray(state.settings.cards)) state.settings.cards=[];
+  if(!state.settings.priceMode) state.settings.priceMode='incl';
 }
 function save(){ saveRaw(JSON.stringify(state)); }
 
@@ -356,7 +393,15 @@ function tierPct(s,sub){
 /* ================= 隨手記 ================= */
 function normName(s){ return String(s||'').trim().replace(/\s+/g,' '); }
 let qAddOpen=false;
+function renderQMode(){
+  const m=state.settings.priceMode;
+  document.querySelectorAll('#qMode .seg-btn').forEach(b=>b.classList.toggle('active',b.dataset.m===m));
+  document.getElementById('qModeHint').innerHTML = m==='incl'
+    ? '日本 2021 年起規定一定會標「税込」（含稅總額），這數字每家都有，統一記它最不會記錯。'
+    : '本体＝未稅價（標價大字常是這個）。整趟請都記同一種，各店才好比。';
+}
 function renderQuick(){
+  renderQMode();
   const stores=activeStores();
   if(!stores.find(s=>s.id===qSelStore)) qSelStore=stores.length?stores[0].id:null;
   document.getElementById('qStores').innerHTML=
@@ -615,8 +660,49 @@ function setTier(id,i,k,v){ const s=state.stores.find(x=>x.id===id); if(s&&s.tie
 function renderSettings(){
   document.getElementById('rateInput').value=state.settings.rate;
   document.getElementById('cashbackInput').value=state.settings.cashback||0;
-  document.querySelectorAll('input[name=pmode]').forEach(r=>r.checked=(r.value===state.settings.priceMode));
+  renderCards();
   updateRateInfo();
+}
+function renderCards(){
+  const wrap=document.getElementById('cardChips'); if(!wrap) return;
+  const active=state.settings.activeCardKey||'none';
+  let html=`<button class="tab ${active==='none'?'active':''}" onclick="pickCard('none')">不算回饋</button>`;
+  html+=allCards().map(c=>`<button class="tab ${active===c.key?'active':''}" onclick="pickCard('${c.key}')">${esc(c.name)} ${c.rate}%</button>`).join('');
+  wrap.innerHTML=html;
+  const note=document.getElementById('cardNote'), delBtn=document.getElementById('delCardBtn');
+  const c=findCard(active);
+  const cb=state.settings.cashback||0;
+  const adj=(c && CARD_PRESETS.some(p=>p.key===c.key) && Math.abs(cb-c.rate)>0.001)
+    ? ' <b>（你已手動改用 '+cb+'%）</b>' : '';
+  if(c&&c.note){ note.innerHTML='<b>'+esc(c.name)+'</b>：'+esc(c.note)+adj; note.style.display=''; }
+  else if(c&&!c.note){ note.innerHTML='<b>'+esc(c.name)+'</b>：自訂卡，回饋 '+c.rate+'%（可在上方改）。'; note.style.display=''; }
+  else note.style.display='none';
+  /* 只有自訂卡可刪 */
+  delBtn.style.display=(c && !CARD_PRESETS.some(p=>p.key===c.key))?'':'none';
+}
+function pickCard(key){
+  state.settings.activeCardKey=key;
+  const c=findCard(key);
+  state.settings.cashback=(key==='none'||!c)?0:(c.rate||0);
+  renderSettings(); recalc();
+  toast(key==='none'?'不計回饋':('用 '+(c?c.name:'')+' '+(c?c.rate:0)+'%'));
+}
+function addCustomCard(){
+  const name=prompt('卡片名稱？（例：JCB W卡、樂天卡）'); if(!name||!name.trim()) return;
+  const rateStr=prompt('日本消費回饋 %？（填保守、實拿的基礎值即可，例 1.5）','1.5');
+  const rate=num(rateStr); if(rate===null||rate<0){ toast('回饋率要是數字'); return; }
+  const key='c_'+(++uid)+'_'+Math.floor(performance.now());
+  (state.settings.cards=state.settings.cards||[]).push({key, name:name.trim(), rate:Math.min(30,rate)});
+  state.settings.activeCardKey=key; state.settings.cashback=Math.min(30,rate);
+  renderSettings(); recalc(); toast('已加入 '+name.trim());
+}
+function delActiveCard(){
+  const key=state.settings.activeCardKey; const c=findCard(key);
+  if(!c||CARD_PRESETS.some(p=>p.key===key)) return;
+  if(!confirm('刪除自訂卡「'+c.name+'」？')) return;
+  state.settings.cards=(state.settings.cards||[]).filter(x=>x.key!==key);
+  state.settings.activeCardKey='none'; state.settings.cashback=0;
+  renderSettings(); recalc();
 }
 function updateRateInfo(){
   const s=state.settings, el=document.getElementById('rateInfo');
@@ -638,10 +724,16 @@ function fetchRate(){
   }).catch(()=>toast('抓不到匯率（可能沒網路），請手動輸入'));
 }
 function setCashback(v){
-  const n=num(v); state.settings.cashback=(n===null||n<0)?0:Math.min(30,n);
+  const n=num(v); const val=(n===null||n<0)?0:Math.min(30,n);
+  state.settings.cashback=val;
+  const key=state.settings.activeCardKey;
+  /* 自訂卡：手動改%就同步更新該卡；內建卡：保留提醒但以手動值計算 */
+  if(state.settings.cards&&state.settings.cards.some(x=>x.key===key)){
+    const c=state.settings.cards.find(x=>x.key===key); if(c) c.rate=val;
+  }
   renderSettings(); recalc();
 }
-function setPriceMode(m){ state.settings.priceMode=m; recalc(); toast(m==='excl'?'改用未稅價記錄':'改用含稅價記錄'); }
+function setPriceMode(m){ state.settings.priceMode=m; renderQMode(); renderSettings(); recalc(); toast(m==='excl'?'改記未稅（本体）':'改記含稅（税込）'); }
 
 /* ================= 備份 ================= */
 function exportData(){
